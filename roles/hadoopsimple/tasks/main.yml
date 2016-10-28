@@ -1,0 +1,106 @@
+---
+- name: Add apt key
+  become: true
+  become_method: sudo
+  apt_repository: repo='ppa:hadoop-ubuntu/stable' state=present
+
+- name: Update apt
+  become: true
+  become_method: sudo
+  apt:
+    update_cache: yes
+
+- name: Install python-software-properties package
+  become: true
+  apt:
+    name: python-software-properties
+    state: present
+
+- name: Install default-jdk
+  become: true
+  apt:
+    name: default-jdk
+    state: present
+
+- name: Add designated hadoop group
+  become: true
+  group: name=hadoop state=present
+
+- name: Add designated hadoop user
+  become: true
+  user: name=hduser
+        state=present
+        groups="hadoop,sudo"
+        comment="Hadoop user"
+
+- name: Install ssh
+  become: true
+  apt:
+    name: ssh
+    state: present
+
+- stat: path=/home/hduser/.ssh/id_rsa
+  register: ssh_key
+
+- name: Generate SSH keys
+  become: true
+  become_user: hduser
+  shell: ssh-keygen -t rsa -P "" -f $HOME/.ssh/id_rsa
+  when: ssh_key.stat.exists == False
+
+- name: Save ssh keys
+  become: true
+  become_user: hduser
+  shell: cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+  when: ssh_key.stat.exists == False
+
+- name: Install hadoop
+  become: true
+  apt:
+    name: hadoop
+    state: present
+
+- name: Add hadoop home to bashrc
+  lineinfile: dest=/home/hduser/.bashrc
+              line="export HADOOP_HOME=/usr/lib/hadoop/"
+              state=present
+
+- name: Add java home to bashrc
+  lineinfile: dest=/home/hduser/.bashrc
+              line="export JAVA_HOME=/usr/lib/jvm/java-1.7.0-openjdk-amd64"
+              state=present
+
+- name: Add java home to hadoopenv
+  lineinfile: dest=/etc/hadoop/conf/hadoop-env.sh
+              line="export JAVA_HOME=/usr/lib/jvm/java-1.7.0-openjdk-amd64"
+              state=present
+
+- name: Add hadoop bins to path
+  lineinfile: dest=/home/hduser/.bashrc
+              line="export PATH=$PATH:$HADOOP_HOME/bin"
+              state=present
+
+- name: update-alternatives
+  become: true
+  become_method: sudo
+  shell: update-alternatives --config java
+
+- name: Make required directories w/ permissions
+  become: true
+  become_method: sudo
+  shell: mkdir -p /app/hadoop/tmp && chown hduser:hadoop /app/hadoop/tmp
+
+- name: copy core-site
+  become: true
+  become_method: sudo
+  copy: src=files/core-site.xml dest=/etc/hadoop/conf/core-site.xml owner=hduser group=hadoop mode=0775
+
+- name: copy hdfs-site
+  become: true
+  become_method: sudo
+  copy: src=files/hdfs-site.xml dest=/etc/hadoop/conf/hdfs-site.xml owner=hduser group=hadoop mode=0775
+
+- name: copy mapred-site
+  become: true
+  become_method: sudo
+  copy: src=files/mapred-site.xml dest=/etc/hadoop/conf/mapred-site.xml owner=hduser group=hadoop mode=0775

@@ -1,0 +1,19 @@
+---
+- hosts: hadoop_node
+  remote_user: ubuntu
+  become: true
+  become_method: sudo
+  roles:
+    - hadoopsimple
+
+- hosts: fluentd_nodes
+  remote_user: ubuntu
+  become: true
+  become_method: sudo
+  become_user: root
+  roles:
+    - williamyeh.fluentd
+  vars:
+    # tdagent_plugins:
+    #   - fluent-plugin-webhdfs
+    tdagent_conf_copy: "files/td-agent.conf"

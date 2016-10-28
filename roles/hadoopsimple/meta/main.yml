@@ -1,0 +1,16 @@
+# ---
+# #galaxy_info:
+# author: Saksham Sachdev
+# description: An Ansible role for installing a simple 1 node pseudo distributed hdfs
+# #company:
+# license: Apache
+# min_ansible_version: 1.2
+# platforms:
+#  - name: Ubuntu
+# versions:
+#  - trusty
+# categories:
+#  - cloud
+#  - system
+# #dependencies:
+# #- { role: "azavea.unzip" }
